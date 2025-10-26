@@ -1,0 +1,17 @@
+{
+  "name": "step2-dlq-retry",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "deploy": "cdk deploy",
+    "synth": "cdk synth"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "2.153.0",
+    "constructs": "10.3.0",
+    "typescript": "^5.6.3"
+  }
+}

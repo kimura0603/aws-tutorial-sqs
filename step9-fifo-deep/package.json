@@ -1,0 +1,16 @@
+{
+  "name": "step9-fifo-deep",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "deploy": "cdk deploy",
+    "synth": "cdk synth"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "2.153.0",
+    "constructs": "10.3.0",
+    "typescript": "^5.6.3"
+  }
+}
