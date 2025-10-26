@@ -56,11 +56,12 @@ Lambda (Producer) ─→ SQS Queue ─→ Lambda (Worker)
 
 ## デプロイ
 ```bash
-npm install -g aws-cdk
-npm install
-cdk bootstrap
+npm install  # CDK依存関係とesbuildをインストール
+cdk bootstrap  # 初回のみ
 cdk deploy --outputs-file cdk-outputs.json
 ```
+
+**Note:** Lambda関数は`NodejsFunction`で自動バンドルされるため、`lambda/`ディレクトリで個別に`npm install`する必要はありません。
 
 ## 実行
 ```bash
@@ -74,3 +75,37 @@ curl -X POST "$(jq -r .ApiEndpoint.value cdk-outputs.json)enqueue"       -H "Con
 ## 問題
 1. なぜSQSはPushではなくPullモデルなのか？
 2. Visibility Timeout が短すぎると何が起きるか？
+```
+  重複を観察するには、Worker処理時間を10秒に延ばす必要があ
+  ります：
+
+  // worker.js を以下に変更
+  await new Promise(r => setTimeout(r, 10000));  // 
+  10秒に延長
+
+  実験手順:
+  1. VisibilityTimeout を5秒に変更してデプロイ
+  2. Worker処理を10秒に延ばす
+  3. メッセージを送信
+  4. CloudWatch Logsで同じジョブIDが2回処理されるのを確認
+
+  CloudWatch Logsで見えるもの:
+  Processing job: { id: '1234567890', ... }
+  Processing job: { id: '1234567890', ... }  ← 同じID！
+  ✅ Done: 1234567890
+  ✅ Done: 1234567890
+```
+
+## クリーンアップ
+学習終了後、AWSリソースを削除して課金を停止します：
+```bash
+cdk destroy
+```
+
+削除されるリソース：
+- Lambda関数（Producer, Worker）
+- SQSキュー
+- API Gateway
+- IAMロール
+
+**Note:** CDKToolkitスタック（bootstrap時に作成）は削除されません。他のCDKプロジェクトでも使用するため、残しておいて問題ありません。
