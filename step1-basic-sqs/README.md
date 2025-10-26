@@ -71,10 +71,6 @@ curl -X POST "$(jq -r .ApiEndpoint.value cdk-outputs.json)enqueue"       -H "Con
 ## 観察ポイント
 - CloudWatch Logs の Worker 出力
 - VisibilityTimeout を 5秒 に下げて再デプロイ → 同一メッセージの再配信を観察
-
-## 問題
-1. なぜSQSはPushではなくPullモデルなのか？
-2. Visibility Timeout が短すぎると何が起きるか？
 ```
   重複を観察するには、Worker処理時間を10秒に延ばす必要があ
   ります：
@@ -84,10 +80,11 @@ curl -X POST "$(jq -r .ApiEndpoint.value cdk-outputs.json)enqueue"       -H "Con
   10秒に延長
 
   実験手順:
-  1. VisibilityTimeout を5秒に変更してデプロイ
-  2. Worker処理を10秒に延ばす
-  3. メッセージを送信
-  4. CloudWatch Logsで同じジョブIDが2回処理されるのを確認
+  1. VisibilityTimeout を5秒に変更
+  2. Worker処理を10秒に延ばす。Worker関数にタイムアウトを追加
+  3. cdk deploy
+  4. メッセージを送信
+  5. CloudWatch Logsで同じジョブIDが2回処理されるのを確認
 
   CloudWatch Logsで見えるもの:
   Processing job: { id: '1234567890', ... }
@@ -95,6 +92,11 @@ curl -X POST "$(jq -r .ApiEndpoint.value cdk-outputs.json)enqueue"       -H "Con
   ✅ Done: 1234567890
   ✅ Done: 1234567890
 ```
+
+
+## 問題
+1. なぜSQSはPushではなくPullモデルなのか？
+2. Visibility Timeout が短すぎると何が起きるか？
 
 ## クリーンアップ
 学習終了後、AWSリソースを削除して課金を停止します：
