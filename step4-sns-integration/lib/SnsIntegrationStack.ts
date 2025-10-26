@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
@@ -20,25 +21,19 @@ export class SnsIntegrationStack extends cdk.Stack {
     topic.addSubscription(new subs.SqsSubscription(mailQ));
     topic.addSubscription(new subs.SqsSubscription(inventoryQ));
 
-    const producer = new lambda.Function(this, 'Producer', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'producer.handler',
+    const producer = new NodejsFunction(this, 'Producer', {
+      entry: 'lambda/producer.js',
       environment: { TOPIC_ARN: topic.topicArn },
     });
     topic.grantPublish(producer);
 
-    const mailWorker = new lambda.Function(this, 'MailWorker', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'mailWorker.handler',
+    const mailWorker = new NodejsFunction(this, 'MailWorker', {
+      entry: 'lambda/mailWorker.js',
     });
     mailWorker.addEventSource(new sources.SqsEventSource(mailQ, { batchSize: 1 }));
 
-    const invWorker = new lambda.Function(this, 'InventoryWorker', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'inventoryWorker.handler',
+    const invWorker = new NodejsFunction(this, 'InventoryWorker', {
+      entry: 'lambda/inventoryWorker.js',
     });
     invWorker.addEventSource(new sources.SqsEventSource(inventoryQ, { batchSize: 1 }));
 

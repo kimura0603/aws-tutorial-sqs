@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export default class LongPollingStack extends cdk.Stack {
@@ -12,17 +13,13 @@ export default class LongPollingStack extends cdk.Stack {
       receiveMessageWaitTime: cdk.Duration.seconds(20),
       visibilityTimeout: cdk.Duration.seconds(30),
     });
-    const sender = new lambda.Function(this, 'Sender', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'sender.handler',
+    const sender = new NodejsFunction(this, 'Sender', {
+      entry: 'lambda/sender.js',
       environment: { QUEUE_URL: queue.queueUrl },
     });
     queue.grantSendMessages(sender);
-    const poller = new lambda.Function(this, 'Poller', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'poller.handler',
+    const poller = new NodejsFunction(this, 'Poller', {
+      entry: 'lambda/poller.js',
       environment: { QUEUE_URL: queue.queueUrl, DEFAULT_WAIT: '20' },
       timeout: cdk.Duration.seconds(30),
     });

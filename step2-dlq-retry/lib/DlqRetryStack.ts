@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as sources from 'aws-cdk-lib/aws-lambda-event-sources';
 
@@ -17,18 +18,14 @@ export class DlqRetryStack extends cdk.Stack {
       deadLetterQueue: { queue: dlq, maxReceiveCount: 3 },
     });
 
-    const producer = new lambda.Function(this, 'Producer', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'producer.handler',
+    const producer = new NodejsFunction(this, 'Producer', {
+      entry: 'lambda/producer.js',
       environment: { QUEUE_URL: queue.queueUrl },
     });
     queue.grantSendMessages(producer);
 
-    const worker = new lambda.Function(this, 'Worker', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset('lambda'),
-      handler: 'worker.handler',
+    const worker = new NodejsFunction(this, 'Worker', {
+      entry: 'lambda/worker.js',
     });
     worker.addEventSource(new sources.SqsEventSource(queue, { batchSize: 1 }));
 
